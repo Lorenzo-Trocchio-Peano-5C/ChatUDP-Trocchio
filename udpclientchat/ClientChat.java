@@ -57,7 +57,7 @@ public class ClientChat extends JFrame implements ActionListener {
         setTitle("Chat Client");
         setSize(500, 300);
         setVisible(true);
-
+    }
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource().equals(send)) {
