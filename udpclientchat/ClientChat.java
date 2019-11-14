@@ -3,60 +3,96 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package udpclientchat;
+package clientudp;
 
+import java.awt.BorderLayout;
+import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.SocketException;
-import java.net.SocketTimeoutException;
+import java.net.*;
 import java.net.UnknownHostException;
+import javax.swing.*;
+import javax.swing.border.TitledBorder;
 
 /**
  *
  * @author Asus_X555LD
  */
-public class ClientChat {
-    private DatagramSocket socket;
+public class ClientChat extends JFrame implements ActionListener {
 
-    public ClientChat() throws SocketException {
-        socket = new DatagramSocket();
-        socket.setSoTimeout(1000);
+    private JTextArea toclient = new JTextArea(1, 1);
+    private JTextArea display = new JTextArea(1, 1);
+    private JButton send = new JButton("Send/Start Client");
+    byte[] buffer, buffer1;
+    DatagramSocket client;
+    ServerSocket socket;
+    String username;
+    String messaggio;
+    String IP_address = "127.0.0.1";
+    InetAddress address = InetAddress.getByName(IP_address);
+
+    public ClientChat() throws SocketException, UnknownHostException {
+        JPanel input = new JPanel();
+        input.setLayout(new BorderLayout());
+        input.setBorder(new TitledBorder("Enter Message"));
+        input.add(toclient, BorderLayout.CENTER);
+        input.add(send, BorderLayout.EAST);
+
+        JPanel output = new JPanel();
+        output.setLayout(new BorderLayout());
+        output.setBorder(new TitledBorder("Conversation"));
+        output.add(display, BorderLayout.CENTER);
+
+        JPanel gabung = new JPanel();
+        gabung.setLayout(new GridLayout(2, 1));
+        gabung.add(input);
+        gabung.add(output);
+        buffer = new byte[1024];
+        buffer1 = new byte[1024];
+
+        this.getContentPane().add(gabung, BorderLayout.NORTH);
+        send.addActionListener(this);
+
+        setTitle("Chat Client");
+        setSize(500, 300);
+        setVisible(true);
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    client = new DatagramSocket();
+                    socket = new ServerSocket();
+                    while (true) {
+                        DatagramPacket datapack = new DatagramPacket(buffer1, buffer1.length);
+                        socket.accept();
+                        client.receive(datapack);
+                        String msg = new String(datapack.getData());
+                        display.append("\nServer:" + msg);
+                    }
+                } catch (Exception e) {
+                    e.getMessage();
+                }
+            }
+        }).start();
+
     }
 
-    public void close_socket() {
-        socket.close();
-    }
-
-    public String sendAndRecive(String request, String host, int port) throws UnknownHostException, IOException {
-        byte[] buffer;
-        DatagramPacket datagram;
-        String risposta;
-        // indirizzo iP del destinatario del nostro pacchetto
-        InetAddress address = InetAddress.getByName(host);
-
-        //verifico che il socket non sia chiuso
-        if (socket.isClosed()) {
-            throw new IOException();
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (e.getSource().equals(send)) {
+            try {
+                String messaggio = toclient.getText();
+                buffer1 = messaggio.getBytes();
+                DatagramPacket sendpack = new DatagramPacket(buffer1, buffer1.length, client.getInetAddress(), 9998);
+                client.send(sendpack);
+                display.append("\nIO:" + messaggio);
+                toclient.setText("");
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
         }
-        //Trasformo in array di byte la stringa che voglio inviare
-        buffer = request.getBytes("UTF-8");
-
-        // Costruisco il datagram di richiesta
-        datagram = new DatagramPacket(buffer, buffer.length, address, port);
-
-        // spedisco il datagram
-        socket.send(datagram);
-
-        // Attesa della ricecione del datagram
-        socket.receive(datagram);
-
-        if (datagram.getAddress().equals(address) && datagram.getPort() == port) {
-            risposta = new String(datagram.getData(), 0, datagram.getLength(), "ISO-8859-1");
-        } else {
-            throw new SocketTimeoutException();
-        }
-        return risposta;
     }
+
 }
