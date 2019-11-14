@@ -58,34 +58,13 @@ public class ClientChat extends JFrame implements ActionListener {
         setSize(500, 300);
         setVisible(true);
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    client = new DatagramSocket();
-                    socket = new ServerSocket();
-                    while (true) {
-                        DatagramPacket datapack = new DatagramPacket(buffer1, buffer1.length);
-                        socket.accept();
-                        client.receive(datapack);
-                        String msg = new String(datapack.getData());
-                        display.append("\nServer:" + msg);
-                    }
-                } catch (Exception e) {
-                    e.getMessage();
-                }
-            }
-        }).start();
-
-    }
-
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource().equals(send)) {
             try {
                 String messaggio = toclient.getText();
                 buffer1 = messaggio.getBytes();
-                DatagramPacket sendpack = new DatagramPacket(buffer1, buffer1.length, client.getInetAddress(), 9998);
+                DatagramPacket sendpack = new DatagramPacket(buffer1, buffer1.length, client.getInetAddress(), 8080);
                 client.send(sendpack);
                 display.append("\nIO:" + messaggio);
                 toclient.setText("");
